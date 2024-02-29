@@ -1,0 +1,12 @@
+flask
+Flask-Session
+requests
+openai
+langchain
+langchain-openai
+PyPDF2
+python-dotenv
+pillow
+cassio
+BeautifulSoup4
+python-docx
