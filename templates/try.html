@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+</head>
+<body>
+    <h1>File Upload Example</h1>
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" />
+        <button type="button" onclick="uploadFile()">Upload</button>
+    </form>
+
+    <h2>Uploaded Files:</h2>
+    <ul>
+        {% for file in uploaded_files %}
+            <li>
+                {{ file }}
+                <a href="{{ url_for('remove_file', filename=file) }}">Remove</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        function uploadFile() {
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+
+            if (file) {
+                var form = new FormData();
+                form.append('file', file);
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/upload', true);
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        alert(xhr.responseText);
+                        window.location.reload();
+                    } else {
+                        alert('Error uploading file!');
+                    }
+                };
+
+                xhr.send(form);
+            } else {
+                alert('Please select a file!');
+            }
+        }
+    </script>
+</body>
+</html>

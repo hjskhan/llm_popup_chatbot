@@ -49,17 +49,30 @@ def initialize_astra_vector_store():
 ####################################################
 ####################################################
 # Function to preprocess the uploaded file
+# def preprocessor(uploaded_files, url):
+#     texts = []
+#     if uploaded_files:
+#         print('---------------------- Inside preprocessor')
+#         for uploaded_file in uploaded_files:
+#             print('---------------------- Inside preprocessor for loop')
+#             if uploaded_file.filename.endswith('.pdf'):
+#                 print('---------------------- Inside preprocessor for loop pdf')
+#                 texts.extend(preprocess_pdf(uploaded_file))
+#             elif uploaded_file.filename.endswith(('.doc', '.docx')):
+#                 texts.extend(preprocess_word(uploaded_file))
+#     if url:
+#         texts.extend(preprocess_url(url))
+#     return texts
+
 def preprocessor(uploaded_files, url):
     texts = []
     if uploaded_files:
         print('---------------------- Inside preprocessor')
-        for uploaded_file in uploaded_files:
-            print('---------------------- Inside preprocessor for loop')
-            if uploaded_file.filename.endswith('.pdf'):
-                print('---------------------- Inside preprocessor for loop pdf')
-                texts.extend(preprocess_pdf(uploaded_file))
-            elif uploaded_file.filename.endswith(('.doc', '.docx')):
-                texts.extend(preprocess_word(uploaded_file))
+        if uploaded_files.filename.endswith('.pdf'):
+            print('---------------------- Inside preprocessor for loop pdf')
+            texts.extend(preprocess_pdf(uploaded_files))
+        elif uploaded_files.filename.endswith(('.doc', '.docx')):
+            texts.extend(preprocess_word(uploaded_files))
     if url:
         texts.extend(preprocess_url(url))
     return texts
@@ -138,13 +151,35 @@ message_history.extend(message_text)
 # Define Flask routes for chatbot
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', uploaded_files=session.get('uploaded_files', []))
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename != '':
+            uploaded_files = session.get('uploaded_files', [])
+            uploaded_files.append(file.filename)
+            session['uploaded_files'] = uploaded_files
+            return 'File uploaded successfully!'
+    return 'No file selected!'
+
+@app.route('/remove/<filename>')
+def remove_file(filename):
+    uploaded_files = session.get('uploaded_files', [])
+    if filename in uploaded_files:
+        uploaded_files.remove(filename)
+        session['uploaded_files'] = uploaded_files
+        return redirect(url_for('index'))
+    return 'File not found!'
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chatbot():
     if request.method == 'POST': # if there is file upload then preprocess it\
         user_message = request.form.get('message')
-        uploaded_files = request.files.getlist('file')
+        # uploaded_files = request.files.getlist('file')
+        # uploaded_files = session.get('uploaded_files', [])
+        uploaded_files = request.files['file']
         # uploaded_files = uploaded_files.filename
         print('----------------------',uploaded_files)
         # url = request.('url')

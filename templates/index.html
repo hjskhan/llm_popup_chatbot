@@ -16,14 +16,24 @@
                 <div class="chatbox__content--header">
                     <h4 class="chatbox__heading--header">Chat support</h4>
                 </div>
+                <h2>Uploaded Files:</h2>
+            <ul>
+                {% for file in uploaded_files %}
+                    <li>
+                        {{ file }}
+                        <a href="{{ url_for('remove_file', filename=file) }}">Remove</a>
+                    </li>
+                {% endfor %}
+            </ul>
             </div>
             <div class="chatbox__messages" id="message-container">
                 <div></div>
             </div>
             <div class="chatbox__footer">
               <input type="text" name="message" placeholder="Write a message..." />
-              <input type="file" name="file" id="fileInput" />
               <button type="submit" class="chatbox__send--footer send__button">Send</button>
+              <input type="file" name="file" id="fileInput" />
+              <button type="button" onclick="uploadFile()">Upload</button>
             </div>
         </div>
         <div class="chatbox__button">
