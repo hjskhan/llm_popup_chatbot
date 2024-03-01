@@ -10,6 +10,7 @@ from langchain_community.vectorstores import Cassandra
 from langchain.embeddings.openai import OpenAIEmbeddings
 from PyPDF2 import PdfReader
 from docx import Document
+from pptx import Presentation
 import cassio
 from dotenv import load_dotenv
 from urllib.request import urlopen
@@ -49,32 +50,87 @@ def initialize_astra_vector_store():
 ####################################################
 ####################################################
 # Function to preprocess the uploaded file
-# def preprocessor(uploaded_files, url):
-#     texts = []
-#     if uploaded_files:
-#         print('---------------------- Inside preprocessor')
-#         for uploaded_file in uploaded_files:
-#             print('---------------------- Inside preprocessor for loop')
-#             if uploaded_file.filename.endswith('.pdf'):
-#                 print('---------------------- Inside preprocessor for loop pdf')
-#                 texts.extend(preprocess_pdf(uploaded_file))
-#             elif uploaded_file.filename.endswith(('.doc', '.docx')):
-#                 texts.extend(preprocess_word(uploaded_file))
-#     if url:
-#         texts.extend(preprocess_url(url))
-#     return texts
-
 def preprocessor(uploaded_files, url):
     texts = []
     if uploaded_files:
         print('---------------------- Inside preprocessor')
         if uploaded_files.filename.endswith('.pdf'):
-            print('---------------------- Inside preprocessor for loop pdf')
             texts.extend(preprocess_pdf(uploaded_files))
         elif uploaded_files.filename.endswith(('.doc', '.docx')):
             texts.extend(preprocess_word(uploaded_files))
+        elif uploaded_files.filename.endswith('.txt'):
+            texts.extend(preprocess_text(uploaded_files))
+        elif uploaded_files.filename.endswith('.md'):
+            texts.extend(preprocess_markdown(uploaded_files))
+        elif uploaded_files.filename.endswith(('.html', '.htm')):
+            texts.extend(preprocess_html(uploaded_files))
+        elif uploaded_files.filename.endswith(('.pptx')):
+            texts.extend(preprocess_pptx(uploaded_files))
+            
     if url:
         texts.extend(preprocess_url(url))
+    return texts
+
+# Sub-Function to preprocess powerpoint file (.pptx)
+def preprocess_pptx(uploaded_file):
+    prs = Presentation(uploaded_file)
+    raw_text = ''
+
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                raw_text += shape.text + '\n'    
+
+    text_splitter = CharacterTextSplitter(
+        separator='\n',
+        chunk_size=800,
+        chunk_overlap=200,
+        length_function=len
+    )
+    texts = text_splitter.split_text(raw_text)
+    return texts
+
+# Sub-Function to preprocess plain text file (.txt)
+def preprocess_text(uploaded_file):
+    raw_text = uploaded_file.read().decode('utf-8')
+
+    text_splitter = CharacterTextSplitter(
+        separator='\n',
+        chunk_size=800,
+        chunk_overlap=200,
+        length_function=len
+    )
+    texts = text_splitter.split_text(raw_text)
+    return texts
+
+# Sub-Function to preprocess markdown file (.md)
+def preprocess_markdown(uploaded_file):
+    
+    raw_text = uploaded_file.read().decode('utf-8')
+
+    # Additional markdown processing logic if needed
+
+    text_splitter = CharacterTextSplitter(
+        separator='\n',
+        chunk_size=800,
+        chunk_overlap=200,
+        length_function=len
+    )
+    texts = text_splitter.split_text(raw_text)
+    return texts
+
+# Sub-Function to preprocess HTML file (.html)
+def preprocess_html(uploaded_file):
+    # Additional HTML processing logic if needed
+    raw_text = uploaded_file.read().decode('utf-8')
+
+    text_splitter = CharacterTextSplitter(
+        separator='\n',
+        chunk_size=800,
+        chunk_overlap=200,
+        length_function=len
+    )
+    texts = text_splitter.split_text(raw_text)
     return texts
 
 
@@ -185,15 +241,17 @@ def chatbot():
         # url = request.('url')
         if uploaded_files:
             # Preprocess files and retrieve texts from VectorDB
+            ###################################################
+            # Preprocessng the uploaded file
             session['texts'] = preprocessor(uploaded_files,None)
-            
             texts = session.get('texts')
-
+            print(texts)
             astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
             print('----------------------astraDB initialized')
             astra_vector_store.add_texts(texts)
             print('----------------------texts added to astraDB')
             astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
+            ###################################################
 
             # Perform initial query on VectorDB
             vectorDB_answer = perform_query(user_message, astra_vector_index)

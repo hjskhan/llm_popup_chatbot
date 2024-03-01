@@ -10,3 +10,4 @@ pillow
 cassio
 BeautifulSoup4
 python-docx
+python-pptx
