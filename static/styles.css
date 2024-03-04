@@ -187,6 +187,17 @@ body {
     border-radius: 5px ;
 }
 
+#file_upload_button{
+    background:transparent;
+    border: none;
+    cursor: pointer;
+}
+
+#attach_file_img{
+   fill: #E0E0E0;
+}
+
+
 .chatbox__button button,
 .chatbox__button button:focus,
 .chatbox__button button:visited {
@@ -203,7 +214,7 @@ body {
 
 .chatbox__content--header{
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     align-items: center;
     justify-content: space-between;
     width: 100%;
@@ -233,3 +244,33 @@ body {
 .upload-file-button {
     display: none;
 }
+
+
+/* ACCORDION */
+.chatbox__accordion {
+    margin-top: 10px;
+}
+
+.accordion-input {
+    display: none;
+}
+
+.accordion-label {
+    background-color: #546dff;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    display: block;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.accordion-input:checked + .accordion-label + .accordion-content {
+    max-height: 1000px; /* Adjust this value based on your content */
+}
+

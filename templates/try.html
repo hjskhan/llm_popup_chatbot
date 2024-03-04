@@ -10,28 +10,47 @@
 <div class="container">
     <div class="chatbox">
         <div class="chatbox__support">
-            <div class="chatbox__accordion">
+            <!-- <div class="chatbox__accordion">
                 <input type="checkbox" id="uploadAccordion" class="accordion-input">
                 <label for="uploadAccordion" class="accordion-label">Uploaded Files and URLs</label>
                 <div class="accordion-content">
-                    <!-- Content of the accordion -->
+                    Content of the accordion 
                     <div class="upload">
                         <h2>Uploaded Files:</h2>
                         <ul>
-                            <!-- Add dynamic content here using your server-side logic -->
+                             Add dynamic content here using your server-side logic 
                         </ul>
                         <h2>Uploaded URLs:</h2>
                         <ul>
-                            <!-- Add dynamic content here using your server-side logic -->
+                           Add dynamic content here using your server-side logic 
                         </ul>
                     </div>
                 </div>
-            </div>
+            </div> -->
                     <div class="chatbox__header">
                     <div class="chatbox__image--header">
                     </div>
                     <div class="chatbox__content--header">
+                        <div class="chatbox__accordion">
+                            <input type="checkbox" id="uploadAccordion" class="accordion-input">
+                            <label for="uploadAccordion" class="accordion-label">Uploaded Files and URLs</label>
+                            <div class="accordion-content">
+                                <!-- Content of the accordion -->
+                                <div class="upload">
+                                    <h2>Uploaded Files:</h2>
+                                    <ul>
+                                        <!-- Add dynamic content here using your server-side logic -->
+                                    </ul>
+                                    <h2>Uploaded URLs:</h2>
+                                    <ul>
+                                        <!-- Add dynamic content here using your server-side logic -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
                         <h4 class="chatbox__heading--header">Chat support</h4>
+
                         <div class="loader"></div>
                     </div>
                 </div>
@@ -39,10 +58,10 @@
                     <div></div>
                 </div>
              <div class="chatbox__footer">
-                 <input type="file" name="file" id="fileInput" style="display: none;"/>
-                 <button type="button" onclick="document.getElementById('fileInput').click();" style="background: transparent;border: none;">
-                     <span class="material-symbols-outlined">attach_file</span> 
-                 </button>   
+                <input type="file" name="file" id="fileInput" style="display: none;" />
+                <button type="button" onclick="document.getElementById('fileInput').click();">
+                    <img src="/static/images/attach-file-icon.svg" alt="Attach File" />
+                </button>  
                 <input type="text" name="message" placeholder="Write a message..." />
                 <button type="submit" class="chatbox__send--footer send__button">Send</button>
                 <!-- <input type="file" name="file" id="fileInput"/>

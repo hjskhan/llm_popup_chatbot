@@ -204,7 +204,6 @@ body {
 /* HTML: <div class="loader"></div> */
 .chatbox__content--header{
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: space-between;
     width: 100%;

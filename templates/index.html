@@ -14,35 +14,48 @@
                 <div class="chatbox__image--header">
                 </div>
                 <div class="chatbox__content--header">
-                    <h4 class="chatbox__heading--header">Chat support</h4>
+                    <div class="chatbox__accordion">
+                        <input type="checkbox" id="uploadAccordion" class="accordion-input">
+                        <label for="uploadAccordion" class="accordion-label">Uploaded Files and URLs</label>
+                        <div class="accordion-content">
+                            <!-- Content of the accordion -->
+                            <div class="upload">
+                                <h2>Uploaded Files:</h2>
+                                <ul>
+                                    {% for file in uploaded_files %}
+                                        <li>
+                                            {{ file }}
+                                            <a href="{{ url_for('remove_file', filename=file) }}">Remove</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                    <h2>Uploaded URLs:</h2>
+                                <ul>
+                                    {% for url in url_links %}
+                                        <li>
+                                            {{ url }}
+                                            <a href="{{ url_for('remove_url', url=url) }}">Remove</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <h2>Uploaded Files:</h2>
-            <ul>
-                {% for file in uploaded_files %}
-                    <li>
-                        {{ file }}
-                        <a href="{{ url_for('remove_file', filename=file) }}">Remove</a>
-                    </li>
-                {% endfor %}
-            </ul>
-                <h2>Uploaded URLs:</h2>
-            <ul>
-                {% for url in url_links %}
-                    <li>
-                        {{ url }}
-                        <a href="{{ url_for('remove_url', url=url) }}">Remove</a>
-                    </li>
-                {% endfor %}
-            </ul>
             </div>
             <div class="chatbox__messages" id="message-container">
                 <div></div>
             </div>
             <div class="chatbox__footer">
+                
+                <input type="file" name="file" id="fileInput" style="display: none;" onchange="fileSelected(this)" />
+                <button id="file_upload_button" type="button" onclick="openFileInput()">
+                    <img id="attach_file_img" src='/static/images/attach-file-icon.png' alt="attach_file">
+                </button>
+
               <input type="text" name="message" placeholder="Write a message..." />
               <button type="submit" class="chatbox__send--footer send__button">Send</button>
-              <input type="file" name="file" id="fileInput" />
-              <button type="button" onclick="uploadFile()">Upload file</button>
+
               <input type="text" name="url" id="urlInput" placeholder="Enter URL" />
               <button type="button" onclick="uploadURL()">Upload url</button>
             </div>

@@ -99,6 +99,18 @@ class Chatbox {
     }
 }
 
+
+function openFileInput() {
+    var fileInput = document.getElementById('fileInput');
+    fileInput.click();
+}
+
+function fileSelected(input) {
+    var file = input.files[0];
+    if (file) {
+        uploadFile(file);
+    }
+}   
 function uploadFile() {
     var fileInput = document.getElementById('fileInput');
     var file = fileInput.files[0];
@@ -122,8 +134,8 @@ function uploadFile() {
         };
 
         xhr.send(form);
-    } else {
-        alert('Please select a file!');
+    // } else {
+    //     alert('Please select a file!');
     }
 }
 
@@ -166,7 +178,7 @@ function showLoader() {
     loaderContainer.appendChild(loaderDiv);
 
     // Append the loader container to the chatbox
-    var chatboxMessages = document.querySelector('.chatbox__support');
+    var chatboxMessages = document.querySelector('.chatbox__header');
     chatboxMessages.appendChild(loaderContainer);
 }
 
@@ -177,6 +189,16 @@ function hideLoader() {
         loaderContainer.remove();
     }
 }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const accordionInput = document.getElementById("uploadAccordion");
+
+    accordionInput.addEventListener("change", function () {
+        const accordionContent = document.querySelector(".accordion-content");
+        accordionContent.style.maxHeight = accordionInput.checked ? accordionContent.scrollHeight + "px" : 0;
+    });
+});
 
 const chatbox = new Chatbox();
 chatbox.display();  
