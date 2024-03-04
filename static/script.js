@@ -139,9 +139,31 @@ function uploadFile() {
     }
 }
 
+
+document.addEventListener("DOMContentLoaded", function () {
+    
+    const popupBtn = document.getElementById('popup-btn');
+    const popup = document.getElementById('popup');
+    const closeBtn = document.getElementById('upload_url');
+    
+    popupBtn.addEventListener('click', openPopup);
+    closeBtn.addEventListener('click', closePopup);
+
+});
+
+
+function openPopup() {
+    popup.style.display = 'flex';
+  }
+
+function closePopup() {
+    popup.style.display = 'none';
+  }
+
 function uploadURL() {
+    closePopup();
     var urlInput = document.getElementById('urlInput');
-    var url = urlInput.value;
+    var url = urlInput.value.trim();
 
     if (url) {
         showLoader();
@@ -165,7 +187,12 @@ function uploadURL() {
     } else {
         alert('Please enter a URL!');
     }
+
+    // Hide the URL input after processing
+    urlInput.value = '';
+    // urlInput.style.display = 'none';
 }
+
 
 function showLoader() {
     // Create a container for the loader

@@ -264,7 +264,7 @@ def upload_url():
         astra_vector_store.add_texts(texts)
         print('----------------------texts added to astraDB')
         astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
-        session['astra_vector_index'] = astra_vector_index  # Store the vector index in session
+        current_app.config["AstraVectorIndex"] = astra_vector_index  # Store the vector index in session
         return 'URL uploaded successfully!'
     return 'No URL selected!'
 
