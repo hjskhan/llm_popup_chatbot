@@ -40,21 +40,12 @@ class Chatbox {
     
     onSendButton(chatbox) {
         var textField = chatbox.querySelector('input[type="text"]');
-        // var fileInput = chatbox.querySelector('input[type="file"]');
         let message = textField.value;
-    
-        // if (message === "" && !fileInput.files.length) {
-        //     return;
-        // }
         if (message === "") {
             return;
         }
         let formData = new FormData();
         formData.append('message', message);
-        // if (fileInput.files.length) {
-        //     formData.append('file', fileInput.files[0]);
-        // }
-    
         let msg1 = { name: "User", message: message }
         this.messages.push(msg1);
         this.updateChatText(chatbox);
@@ -69,13 +60,11 @@ class Chatbox {
             this.messages.push(msg2);
             this.updateChatText(chatbox);
             textField.value = '';
-            // fileInput.value = ''; // Clear file input
         })
         .catch((error) => {
             console.error('Error:', error);
             this.updateChatText(chatbox);
             textField.value = '';
-            // fileInput.value = ''; // Clear file input
         });
     }
     
@@ -99,7 +88,6 @@ class Chatbox {
     }
 }
 
-
 function openFileInput() {
     var fileInput = document.getElementById('fileInput');
     fileInput.click();
@@ -112,11 +100,15 @@ function fileSelected(input) {
     }
 }   
 function uploadFile() {
+    
     var fileInput = document.getElementById('fileInput');
     var file = fileInput.files[0];
-
+    
     if (file) {
-        showLoader();
+        showLoader();        
+        document.getElementById('file_upload_button').disabled = true;
+        document.getElementById('popup-btn').disabled = true;
+        document.querySelector('.chatbox__send--footer').disabled = true;
         var form = new FormData();
         form.append('file', file);
 
@@ -125,6 +117,9 @@ function uploadFile() {
 
         xhr.onload = function() {
             hideLoader();
+            document.getElementById('file_upload_button').disabled = false;
+            document.getElementById('popup-btn').disabled = false;
+            document.querySelector('chatbox__send--footer').disabled = false;
             if (xhr.status === 200) {
                 alert(xhr.responseText);
                 window.location.reload();
@@ -134,8 +129,7 @@ function uploadFile() {
         };
 
         xhr.send(form);
-    // } else {
-    //     alert('Please select a file!');
+        
     }
 }
 
@@ -164,8 +158,11 @@ function uploadURL() {
     closePopup();
     var urlInput = document.getElementById('urlInput');
     var url = urlInput.value.trim();
-
+    
     if (url) {
+        document.getElementById('file_upload_button').disabled = true;
+        document.getElementById('popup-btn').disabled = true;
+        document.querySelector('chatbox__send--footer').disabled = true;
         showLoader();
         var form = new FormData();
         form.append('url', url);
@@ -175,6 +172,9 @@ function uploadURL() {
 
         xhr.onload = function() {
             hideLoader();
+            document.getElementById('file_upload_button').disabled = false;
+            document.getElementById('popup-btn').disabled = false;
+            document.querySelector('chatbox__send--footer').disabled = false;
             if (xhr.status === 200) {
                 alert(xhr.responseText);
                 window.location.reload();
@@ -187,10 +187,7 @@ function uploadURL() {
     } else {
         alert('Please enter a URL!');
     }
-
-    // Hide the URL input after processing
     urlInput.value = '';
-    // urlInput.style.display = 'none';
 }
 
 

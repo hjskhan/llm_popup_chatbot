@@ -238,15 +238,6 @@ def upload():
             return 'File uploaded and preprocessed successfully!'
     return 'No file selected!'
 
-@app.route('/remove/<filename>')
-def remove_file(filename):
-    uploaded_files = session.get('uploaded_files', [])
-    if filename in uploaded_files:
-        uploaded_files.remove(filename)
-        session['uploaded_files'] = uploaded_files
-        return redirect(url_for('index'))
-    return 'File not found!'
-
 @app.route('/upload_url', methods=['POST'])
 def upload_url():
     
@@ -255,8 +246,12 @@ def upload_url():
         url_links = session.get('url_links', [])
         url_links.append(url)
         session['url_links'] = url_links
-
+        
+        print('---------------------- URLs stored in session:', session['url_links'])
         # preprocess the url and store the texts in session
+        for i in url_links:
+            print('---------------------- url:', i)
+
         session['texts'] = preprocess_url(url)
         texts = session.get('texts')
         astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
@@ -267,15 +262,6 @@ def upload_url():
         current_app.config["AstraVectorIndex"] = astra_vector_index  # Store the vector index in session
         return 'URL uploaded successfully!'
     return 'No URL selected!'
-
-@app.route('/remove_url/<url>')
-def remove_url(url):
-    url_links = session.get('url_links', [])
-    if url in url_links:
-        url_links.remove(url)
-        session['url_links'] = url_links
-        return redirect(url_for('index'))
-    return 'URL not found!'
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chatbot():

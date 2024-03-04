@@ -74,6 +74,9 @@ body {
     display: flex;
     overflow-y: scroll;
     flex-direction: column-reverse;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(119, 119, 119) rgb(198, 198, 198);
+    
 }
 
 .messages__item {
@@ -179,29 +182,54 @@ body {
     padding: 10px 10px;
     border-radius: 30px;
     text-align: left;
+    background: #e6e6e6;
+    margin: 5px;
 }
 
 .chatbox__send--footer {
-    color: white;
-    background-color: #546dff;
-    border-radius: 5px ;
+    background: transparent;
+}
+
+.fa-paper-plane{
+    color: #ffffff;
+}
+.fa-paper-plane:hover{
+    color: #888888;
 }
 
 #file_upload_button{
     background:transparent;
     border: none;
     cursor: pointer;
+    margin: 5px;
 }
 
-#attach_file_img{
-   fill: #E0E0E0;
+.fa-paperclip{
+    color: #ffffff;
+    rotate: -45deg;
+}
+.fa-paperclip:hover{
+    color: #888888;
 }
 
 #popup-btn{
     background: transparent;
     border: none;
+    margin: 5px;
+    cursor: pointer;
 }
-
+.fa-link{
+    color: #ffffff;
+}
+.fa-link:hover{
+    color: #888888;
+}
+.fa-circle-xmark{
+    color: #ffffff;
+}
+.fa-circle-xmark:hover{
+    color: #888888;
+}
 #popup {
     display: none;
     position: fixed;
@@ -212,7 +240,13 @@ body {
     background: rgba(0, 0, 0, 0.5);
     align-items: center;
     justify-content: center;
+    border-radius: 15px;
   }
+#url_label{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+}
 
   #popup-content {
     background: #fff;
@@ -221,13 +255,23 @@ body {
     text-align: center;
   }
 
+  #upload_url{
+    border: none;
+  }
   #close-btn {
     cursor: pointer;
     position: absolute;
     top: 10px;
     right: 10px;
+    margin: 15px;
   }
 
+.fa-messages{
+    color: #3e3bff;
+}
+.fa-messages:hover{
+    color: #888888;
+}
 
 
 .chatbox__button button,
@@ -244,9 +288,17 @@ body {
     cursor: pointer;
 }
 
+.fa-comments{
+    color: #3e3bff;
+    font-size: 30px;
+}
+.fa-comments:hover{
+    color: #888888;
+}
+
 .chatbox__content--header{
     display: flex;
-    /* flex-direction: column; */
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
     width: 100%;
