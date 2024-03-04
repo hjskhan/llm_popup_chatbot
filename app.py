@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, current_app
 from flask_session import Session
 import os
+import sys
 import openai
+import pickle
 from langchain.adapters import openai as lc_openai #for chatbot two way conversations
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain.llms import OpenAI
@@ -20,8 +22,8 @@ import requests
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["AstraVectorIndex"] = None
 Session(app)
-
 
 # Load environment variables from .env file
 load_dotenv(override=True)
@@ -49,8 +51,32 @@ def initialize_astra_vector_store():
 
 ####################################################
 ####################################################
+# Function to preprocess url
+def preprocess_url(url):
+    texts = []
+    print('---------------------- Inside preprocess_url')
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # kill all script and style elements
+    for script in soup(["script", "style"]):
+        script.decompose()    # rip it out
+
+    raw_text = soup.get_text()
+
+    text_splitter = CharacterTextSplitter(
+        separator='\n',
+        chunk_size=900,
+        chunk_overlap=200,
+        length_function=len
+    )
+    texts = text_splitter.split_text(raw_text)
+    print('---------------------- chunks created from url')
+    print('---------------------- preprocess_url done')
+    return texts
+
 # Function to preprocess the uploaded file
-def preprocessor(uploaded_files, url):
+def preprocessor_files(uploaded_files):
     texts = []
     if uploaded_files:
         print('---------------------- Inside preprocessor')
@@ -66,10 +92,10 @@ def preprocessor(uploaded_files, url):
             texts.extend(preprocess_html(uploaded_files))
         elif uploaded_files.filename.endswith(('.pptx')):
             texts.extend(preprocess_pptx(uploaded_files))
-            
-    if url:
-        texts.extend(preprocess_url(url))
+
     return texts
+
+
 
 # Sub-Function to preprocess powerpoint file (.pptx)
 def preprocess_pptx(uploaded_file):
@@ -83,7 +109,7 @@ def preprocess_pptx(uploaded_file):
 
     text_splitter = CharacterTextSplitter(
         separator='\n',
-        chunk_size=800,
+        chunk_size=900,
         chunk_overlap=200,
         length_function=len
     )
@@ -96,7 +122,7 @@ def preprocess_text(uploaded_file):
 
     text_splitter = CharacterTextSplitter(
         separator='\n',
-        chunk_size=800,
+        chunk_size=900,
         chunk_overlap=200,
         length_function=len
     )
@@ -112,7 +138,7 @@ def preprocess_markdown(uploaded_file):
 
     text_splitter = CharacterTextSplitter(
         separator='\n',
-        chunk_size=800,
+        chunk_size=900,
         chunk_overlap=200,
         length_function=len
     )
@@ -126,7 +152,7 @@ def preprocess_html(uploaded_file):
 
     text_splitter = CharacterTextSplitter(
         separator='\n',
-        chunk_size=800,
+        chunk_size=900,
         chunk_overlap=200,
         length_function=len
     )
@@ -134,25 +160,6 @@ def preprocess_html(uploaded_file):
     return texts
 
 
-# Sub-Function to preprocess url
-def preprocess_url(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # kill all script and style elements
-    for script in soup(["script", "style"]):
-        script.decompose()    # rip it out
-
-    raw_text = soup.get_text()
-
-    text_splitter = CharacterTextSplitter(
-        separator='\n',
-        chunk_size=800,
-        chunk_overlap=200,
-        length_function=len
-    )
-    texts = text_splitter.split_text(raw_text)
-    return texts
 
 # Sub-Function to preprocess pdf
 def preprocess_pdf(uploaded_file):
@@ -165,7 +172,7 @@ def preprocess_pdf(uploaded_file):
 
     text_splitter = CharacterTextSplitter(
         separator='\n',
-        chunk_size=800,
+        chunk_size=900,
         chunk_overlap=200,
         length_function=len
     )
@@ -182,7 +189,7 @@ def preprocess_word(uploaded_file):
 
     text_splitter = CharacterTextSplitter(
         separator='\n',
-        chunk_size=800,
+        chunk_size=900,
         chunk_overlap=200,
         length_function=len
     )
@@ -211,13 +218,24 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    
     if 'file' in request.files:
         file = request.files['file']
         if file.filename != '':
             uploaded_files = session.get('uploaded_files', [])
             uploaded_files.append(file.filename)
             session['uploaded_files'] = uploaded_files
-            return 'File uploaded successfully!'
+            # preprocess the file and store the texts in session
+            session['texts'] = preprocessor_files(file)
+            texts = session.get('texts')
+            astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
+            print('----------------------astraDB initialized')
+            astra_vector_store.add_texts(texts)
+            print('----------------------texts added to astraDB')
+            astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
+            current_app.config["AstraVectorIndex"] = astra_vector_index
+            # session['astra_vector_index'] = astra_vector_index  # Store the vector index in session
+            return 'File uploaded and preprocessed successfully!'
     return 'No file selected!'
 
 @app.route('/remove/<filename>')
@@ -229,36 +247,53 @@ def remove_file(filename):
         return redirect(url_for('index'))
     return 'File not found!'
 
+@app.route('/upload_url', methods=['POST'])
+def upload_url():
+    
+    if 'url' in request.form:
+        url = request.form['url']
+        url_links = session.get('url_links', [])
+        url_links.append(url)
+        session['url_links'] = url_links
+
+        # preprocess the url and store the texts in session
+        session['texts'] = preprocess_url(url)
+        texts = session.get('texts')
+        astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
+        print('----------------------astraDB initialized')
+        astra_vector_store.add_texts(texts)
+        print('----------------------texts added to astraDB')
+        astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
+        session['astra_vector_index'] = astra_vector_index  # Store the vector index in session
+        return 'URL uploaded successfully!'
+    return 'No URL selected!'
+
+@app.route('/remove_url/<url>')
+def remove_url(url):
+    url_links = session.get('url_links', [])
+    if url in url_links:
+        url_links.remove(url)
+        session['url_links'] = url_links
+        return redirect(url_for('index'))
+    return 'URL not found!'
+
 @app.route('/chat', methods=['GET', 'POST'])
 def chatbot():
+    
     if request.method == 'POST': # if there is file upload then preprocess it\
         user_message = request.form.get('message')
-        # uploaded_files = request.files.getlist('file')
-        # uploaded_files = session.get('uploaded_files', [])
-        uploaded_files = request.files['file']
-        # uploaded_files = uploaded_files.filename
-        print('----------------------',uploaded_files)
-        # url = request.('url')
-        if uploaded_files:
-            # Preprocess files and retrieve texts from VectorDB
-            ###################################################
-            # Preprocessng the uploaded file
-            session['texts'] = preprocessor(uploaded_files,None)
-            texts = session.get('texts')
-            print(texts)
-            astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
-            print('----------------------astraDB initialized')
-            astra_vector_store.add_texts(texts)
-            print('----------------------texts added to astraDB')
-            astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
-            ###################################################
-
+        # if 'astra_vector_index' in session:
+            # astra_vector_index = session.get('astra_vector_index')
+        if current_app.config["AstraVectorIndex"] is not None:
+            astra_vector_index = current_app.config["AstraVectorIndex"]
+            print('----------------------astra_vector_index is not None')
             # Perform initial query on VectorDB
             vectorDB_answer = perform_query(user_message, astra_vector_index)
             print('----------------------vectorDB query performed')
             message_history.append({"role": "user", "content": f"Answer this: {user_message}, you can use this additional information if required {vectorDB_answer}"})
 
         else:
+            print('----------------------astra_vector_index not found in session')
             message_history.append({"role": "user", "content": user_message})
 
     # Rest of the code for chat processing

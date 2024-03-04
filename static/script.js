@@ -40,18 +40,20 @@ class Chatbox {
     
     onSendButton(chatbox) {
         var textField = chatbox.querySelector('input[type="text"]');
-        var fileInput = chatbox.querySelector('input[type="file"]');
+        // var fileInput = chatbox.querySelector('input[type="file"]');
         let message = textField.value;
     
-        if (message === "" && !fileInput.files.length) {
+        // if (message === "" && !fileInput.files.length) {
+        //     return;
+        // }
+        if (message === "") {
             return;
         }
-    
         let formData = new FormData();
         formData.append('message', message);
-        if (fileInput.files.length) {
-            formData.append('file', fileInput.files[0]);
-        }
+        // if (fileInput.files.length) {
+        //     formData.append('file', fileInput.files[0]);
+        // }
     
         let msg1 = { name: "User", message: message }
         this.messages.push(msg1);
@@ -67,13 +69,13 @@ class Chatbox {
             this.messages.push(msg2);
             this.updateChatText(chatbox);
             textField.value = '';
-            fileInput.value = ''; // Clear file input
+            // fileInput.value = ''; // Clear file input
         })
         .catch((error) => {
             console.error('Error:', error);
             this.updateChatText(chatbox);
             textField.value = '';
-            fileInput.value = ''; // Clear file input
+            // fileInput.value = ''; // Clear file input
         });
     }
     
@@ -102,6 +104,7 @@ function uploadFile() {
     var file = fileInput.files[0];
 
     if (file) {
+        showLoader();
         var form = new FormData();
         form.append('file', file);
 
@@ -109,6 +112,7 @@ function uploadFile() {
         xhr.open('POST', '/upload', true);
 
         xhr.onload = function() {
+            hideLoader();
             if (xhr.status === 200) {
                 alert(xhr.responseText);
                 window.location.reload();
@@ -123,6 +127,56 @@ function uploadFile() {
     }
 }
 
+function uploadURL() {
+    var urlInput = document.getElementById('urlInput');
+    var url = urlInput.value;
+
+    if (url) {
+        showLoader();
+        var form = new FormData();
+        form.append('url', url);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload_url', true);
+
+        xhr.onload = function() {
+            hideLoader();
+            if (xhr.status === 200) {
+                alert(xhr.responseText);
+                window.location.reload();
+            } else {
+                alert('Error uploading URL!');
+            }
+        };
+
+        xhr.send(form);
+    } else {
+        alert('Please enter a URL!');
+    }
+}
+
+function showLoader() {
+    // Create a container for the loader
+    var loaderContainer = document.createElement('div');
+    loaderContainer.className = 'loader-container';
+
+    // Create and append the loader element
+    var loaderDiv = document.createElement('div');
+    loaderDiv.className = 'loader';
+    loaderContainer.appendChild(loaderDiv);
+
+    // Append the loader container to the chatbox
+    var chatboxMessages = document.querySelector('.chatbox__support');
+    chatboxMessages.appendChild(loaderContainer);
+}
+
+function hideLoader() {
+    // Remove the loader container
+    var loaderContainer = document.querySelector('.loader-container');
+    if (loaderContainer) {
+        loaderContainer.remove();
+    }
+}
 
 const chatbox = new Chatbox();
 chatbox.display();  

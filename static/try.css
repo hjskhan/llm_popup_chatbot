@@ -200,7 +200,8 @@ body {
     box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
     cursor: pointer;
 }
-
+/* HTML: <div class="loader"></div> */
+/* HTML: <div class="loader"></div> */
 .chatbox__content--header{
     display: flex;
     flex-direction: column;
@@ -226,10 +227,43 @@ body {
       60%{background-position:0%  50%, 50% 100%,100%   0%}
       80%{background-position:0%  50%, 50%  50%,100% 100%}
   }
-  .attach-file-icon {
-    cursor: pointer;
+
+/* ACCORDION */
+.chatbox__accordion {
+    margin-top: 10px;
 }
 
-.upload-file-button {
+.accordion-input {
     display: none;
+}
+
+.accordion-label {
+    background-color: #546dff;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    display: block;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.accordion-input:checked + .accordion-label + .accordion-content {
+    max-height: 1000px; /* Adjust this value based on your content */
+}
+
+
+
+.material-symbols-outlined {
+    color: #c7c7c7;
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+  
 }
