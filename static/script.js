@@ -37,6 +37,7 @@ class Chatbox {
         }
     }
 
+
     
     onSendButton(chatbox) {
         var textField = chatbox.querySelector('input[type="text"]');
@@ -49,7 +50,7 @@ class Chatbox {
         let msg1 = { name: "User", message: message }
         this.messages.push(msg1);
         this.updateChatText(chatbox);
-    
+        
         fetch('/chat', {
             method: 'POST',
             body: formData,
@@ -83,10 +84,11 @@ class Chatbox {
             }
           });
 
-        const chatmessage = chatbox.querySelector('.chatbox__messages');
-        chatmessage.innerHTML = html;
+          const chatmessage = chatbox.querySelector('.chatbox__messages');
+          chatmessage.innerHTML = html;
+        }
     }
-}
+    
 
 function openFileInput() {
     var fileInput = document.getElementById('fileInput');
@@ -214,15 +216,11 @@ function hideLoader() {
     }
 }
 
-
-document.addEventListener("DOMContentLoaded", function () {
-    const accordionInput = document.getElementById("uploadAccordion");
-
-    accordionInput.addEventListener("change", function () {
-        const accordionContent = document.querySelector(".accordion-content");
-        accordionContent.style.maxHeight = accordionInput.checked ? accordionContent.scrollHeight + "px" : 0;
-    });
-});
+// function to toggle size of chatbox
+function toggleChatboxSize() {
+    var chatboxSupport = document.querySelector('.chatbox__support');
+    chatboxSupport.classList.toggle('expanded');
+}
 
 const chatbox = new Chatbox();
 chatbox.display();  

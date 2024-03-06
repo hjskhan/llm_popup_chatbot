@@ -314,6 +314,9 @@ body {
     background-size: calc(100%/3) 50%;
     animation: l3 1s infinite linear;
     margin: 5px;
+    position: absolute;
+    left: 20px;
+    top: 25px;
   }
   @keyframes l3 {
       20%{background-position:0%   0%, 50%  50%,100%  50%}
@@ -358,3 +361,27 @@ body {
     max-height: 1000px; /* Adjust this value based on your content */
 }
 
+/* maximize button*/
+#maximizeButton {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    margin: 5px;
+    color: #ffffff;
+    position: absolute;
+    right: 25px;
+    top: 25px;
+    font-size: 15px;
+}
+#maximizeButton:hover {
+    color: #888888;
+}
+
+.chatbox__support {
+    transition: all 0.6s ease;
+}
+
+.expanded {
+    width: 1300px; /* Set your desired maximum width */
+    height: 800px; /* Set your desired maximum height */
+}

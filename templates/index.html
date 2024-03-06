@@ -14,32 +14,11 @@
                 <div class="chatbox__image--header">
                 </div>
                 <div class="chatbox__content--header">
-                    <!-- <div class="chatbox__accordion">
-                        <input type="checkbox" id="uploadAccordion" class="accordion-input">
-                        <label for="uploadAccordion" class="accordion-label">Uploaded Files and URLs</label>
-                         <div class="accordion-content">
-                            <div class="upload">
-                                <h2>Uploaded Files:</h2>
-                                <ul>
-                                    {% for file in uploaded_files %}
-                                        <li>
-                                            {{ file }}                
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                                    <h2>Uploaded URLs:</h2>
-                                <ul>
-                                    {% for url in url_links %}
-                                        <li>
-                                            <a href="{{ url }}" target="_blank">{{ url }}</a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div> -->
                     <i class="fa fa-robot fa-xl" style="color: #ffffff; margin: 20px;"></i>
                     <h4 class="chatbox__heading--header">ChatBot</h4>
+                    <button id="maximizeButton" onclick="toggleChatboxSize()">
+                        <i class="fa fa-window-maximize"></i>
+                    </button>
                 </div>
             </div>
             <div class="chatbox__messages" id="message-container">
