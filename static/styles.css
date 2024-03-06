@@ -23,7 +23,7 @@ body {
 =============== */
 .chatbox {
     position: absolute;
-    bottom: 30px;
+    bottom: 20px;
     right: 30px;
 }
 
@@ -41,7 +41,7 @@ body {
 
 /* CONTENT ISOPEN */
 .chatbox--active {
-    transform: translateY(-40px);
+    transform: translateY(-10px);
     z-index: 123456;
     opacity: 1;
 
@@ -101,7 +101,7 @@ body {
 
 .chatbox__support {
     background: #f9f9f9;
-    height: 600px;
+    height: 510px;
     width: 500px;
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
     border-top-left-radius: 20px;
