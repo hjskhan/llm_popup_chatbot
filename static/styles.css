@@ -73,6 +73,7 @@ body {
     margin-top: auto;
     display: flex;
     overflow-y: scroll;
+    overflow-x: hidden; 
     flex-direction: column-reverse;
     scrollbar-width: thin;
     scrollbar-color: rgb(119, 119, 119) rgb(198, 198, 198);
@@ -80,6 +81,7 @@ body {
 }
 
 .messages__item {
+    word-wrap: break-word;
     background: orange;
     max-width: 60.6%;
     width: fit-content;
@@ -176,14 +178,18 @@ body {
     margin-top: 20px;
 }
 
-.chatbox__footer input {
-    width: 80%;
+.chatbox__footer textarea {
+    min-width: 80%;
     border: none;
     padding: 10px 10px;
     border-radius: 30px;
     text-align: left;
     background: #e6e6e6;
     margin: 5px;
+    resize: none;
+    overflow-y: scroll;
+    scrollbar-width:none;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .chatbox__send--footer {
@@ -225,7 +231,7 @@ body {
     color: #888888;
 }
 .fa-circle-xmark{
-    color: #ffffff;
+    color: #3e3bff;
 }
 .fa-circle-xmark:hover{
     color: #888888;
@@ -260,9 +266,10 @@ body {
   }
   #close-btn {
     cursor: pointer;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    position: relative;
+    top: -23px;
+    left: 228px;
+
     margin: 15px;
   }
 
@@ -332,34 +339,6 @@ body {
     display: none;
 }
 
-
-/* ACCORDION */
-.chatbox__accordion {
-    margin-top: 10px;
-}
-
-.accordion-input {
-    display: none;
-}
-
-.accordion-label {
-    background-color: #546dff;
-    color: white;
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    display: block;
-}
-
-.accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-}
-
-.accordion-input:checked + .accordion-label + .accordion-content {
-    max-height: 1000px; /* Adjust this value based on your content */
-}
 
 /* maximize button*/
 #maximizeButton {

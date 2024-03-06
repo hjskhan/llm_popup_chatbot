@@ -18,9 +18,9 @@ class Chatbox {
 
         sendButton.addEventListener('click', () => this.onSendButton(chatBox))
 
-        const node = chatBox.querySelector('input');
+        const node = chatBox.querySelector('textarea');
         node.addEventListener("keyup", ({key}) => {
-            if (key === "Enter") {
+            if (event.key === "Enter" && !event.shiftKey) {
                 this.onSendButton(chatBox)
             }
         })
@@ -40,7 +40,7 @@ class Chatbox {
 
     
     onSendButton(chatbox) {
-        var textField = chatbox.querySelector('input[type="text"]');
+        var textField = chatbox.querySelector('textarea');
         let message = textField.value;
         if (message === "") {
             return;
@@ -50,6 +50,8 @@ class Chatbox {
         let msg1 = { name: "User", message: message }
         this.messages.push(msg1);
         this.updateChatText(chatbox);
+
+        showLoader();
         
         fetch('/chat', {
             method: 'POST',
@@ -57,12 +59,15 @@ class Chatbox {
         })
         .then(response => response.json())
         .then(r => {
+            hideLoader();
             let msg2 = { name: "Sam", message: r.response };
             this.messages.push(msg2);
             this.updateChatText(chatbox);
             textField.value = '';
         })
         .catch((error) => {
+
+            hideLoader();
             console.error('Error:', error);
             this.updateChatText(chatbox);
             textField.value = '';
@@ -74,6 +79,7 @@ class Chatbox {
     updateChatText(chatbox) {
         var html = '';
         this.messages.slice().reverse().forEach(function(item, index) {
+            let messageContent = item.message.replace(/\n/g, '<br>');
             if (item.name === "Sam")
             {
                 html += '<div class="messages__item messages__item--visitor">' + item.message + '</div>'
