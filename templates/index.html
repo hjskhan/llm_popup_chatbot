@@ -11,13 +11,15 @@
     <div class="chatbox">
         <div class="chatbox__support">
             <div class="chatbox__header">
-                <div class="chatbox__image--header">
-                </div>
                 <div class="chatbox__content--header">
-                    <i class="fa fa-robot fa-xl" style="color: #ffffff; margin: 20px;"></i>
+                    <i class="fa fa-robot" style="color: #ffffff; margin: 20px;"></i>
                     <h4 class="chatbox__heading--header">ChatBot</h4>
-                    <button id="maximizeButton" onclick="toggleChatboxSize()">
-                        <i class="fa fa-window-maximize"></i>
+                    <!-- Maximize and minimize button -->
+                    <button id="maximizeButton" onclick="toggleChatboxSize()" title="Maximize">
+                        <i class="fa-solid fa-window-maximize"></i>
+                    </button>
+                    <button id="minimizeButton" title="Minimize">
+                        <i class="fa-solid fa-window-minimize"></i>
                     </button>
                 </div>
             </div>
@@ -28,33 +30,33 @@
                                 <!-- ############################################## -->
                 <!-- message input -->
                     <textarea type="text" name="message" placeholder="Enter a prompt here....." ></textarea>
-              <button type="submit" class="chatbox__send--footer send__button">
-                <i class="fa fa-paper-plane fa-xl"></i>
+              <button type="submit" class="chatbox__send--footer send__button" title="Send message">
+                <i class="fa fa-paper-plane"></i>
               </button>
                 <!-- ############################################## -->
 
                 <!-- ############################################## -->
                  <!-- file upload button -->
-                 <input type="file" name="file" id="fileInput" style="display: none;" onchange="fileSelected(this)" />
-                 <button id="file_upload_button" type="button" onclick="openFileInput()">
-                     <i class="fa fa-paperclip fa-rotate-by fa-xl"></i>
+                 <input type="file" name="file" id="fileInput" style="display: none;" onchange="fileSelected(this)" accept=".pdf,.doc,.docx,.pptx,.md,.txt,.htm,.html"/>
+                 <button id="file_upload_button" type="button" onclick="openFileInput()"  title="Attach files">
+                     <i class="fa fa-paperclip"></i>
                  </button>
                  <!-- ############################################## -->
  
                  
                  <!-- ############################################## -->
                <!-- url upload button -->
-               <button id="popup-btn">
-                 <i class="fa fa-link fa-xl"></i>
+               <button id="popup-btn" title="Attach URL">
+                 <i class="fa fa-link"></i>
                </button>
                <!-- url upload popup -->
                <div id="popup">
                  <div id="popup-content">
-                   <span id="close-btn" onclick="closePopup()"><i class="fa fa-circle-xmark fa-xl"></i></span>
+                   <span id="close-btn" onclick="closePopup()" title="Close"><i class="fa fa-circle-xmark"></i></span>
                    <label for="textInput" id="url_label">Enter URL</label>
                    <input type="text" id="urlInput">
-                   <button id="upload_url" onclick="uploadURL()">
-                    <i class="fa fa-circle-right fa-2xl" style="color: #1d1b98;"></i>
+                   <button id="upload_url" onclick="uploadURL()" title="Upload">
+                    <i class="fa fa-circle-right"></i>
                     </button>
                  </div>
                </div>
@@ -66,7 +68,7 @@
         </div>
         <div class="chatbox__button">
             <button>
-                <i class="fa-solid fa-comments"></i>
+                <i class="fa fa-comments"></i>
             </button>
         </div>
     </div>

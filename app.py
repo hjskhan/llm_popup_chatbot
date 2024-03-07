@@ -1,12 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, current_app
+from flask import Flask, render_template, request, session, jsonify, current_app
 from flask_session import Session
 import os
-import sys
 import openai
-import pickle
 from langchain.adapters import openai as lc_openai #for chatbot two way conversations
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
-from langchain.llms import OpenAI
+from langchain_community.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Cassandra
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -234,7 +232,6 @@ def upload():
             print('----------------------texts added to astraDB')
             astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
             current_app.config["AstraVectorIndex"] = astra_vector_index
-            # session['astra_vector_index'] = astra_vector_index  # Store the vector index in session
             return 'File uploaded and preprocessed successfully!'
     return 'No file selected!'
 
@@ -268,8 +265,6 @@ def chatbot():
     
     if request.method == 'POST': # if there is file upload then preprocess it\
         user_message = request.form.get('message')
-        # if 'astra_vector_index' in session:
-            # astra_vector_index = session.get('astra_vector_index')
         if current_app.config["AstraVectorIndex"] is not None:
             astra_vector_index = current_app.config["AstraVectorIndex"]
             print('----------------------astra_vector_index is not None')

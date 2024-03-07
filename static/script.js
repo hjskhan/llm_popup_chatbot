@@ -2,6 +2,7 @@ class Chatbox {
     constructor() {
         this.args = {
             openButton: document.querySelector('.chatbox__button'),
+            minimizeButton: document.getElementById('minimizeButton'),
             chatBox: document.querySelector('.chatbox__support'),
             sendButton: document.querySelector('.send__button'),
             messageContainer: document.querySelector('.chatbox__messages') // Added message container reference
@@ -12,9 +13,11 @@ class Chatbox {
     }
 
     display() {
-        const {openButton, chatBox, sendButton} = this.args;
+        const {openButton, chatBox, sendButton, minimizeButton} = this.args;
 
         openButton.addEventListener('click', () => this.toggleState(chatBox))
+
+        minimizeButton.addEventListener('click', () => this.toggleState(chatBox))
 
         sendButton.addEventListener('click', () => this.onSendButton(chatBox))
 
@@ -50,7 +53,7 @@ class Chatbox {
         let msg1 = { name: "User", message: message }
         this.messages.push(msg1);
         this.updateChatText(chatbox);
-
+        textField.value = '';
         showLoader();
         
         fetch('/chat', {
