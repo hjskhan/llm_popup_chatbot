@@ -5,7 +5,8 @@ class Chatbox {
             minimizeButton: document.getElementById('minimizeButton'),
             chatBox: document.querySelector('.chatbox__support'),
             sendButton: document.querySelector('.send__button'),
-            messageContainer: document.querySelector('.chatbox__messages') // Added message container reference
+            messageContainer: document.querySelector('.chatbox__messages')
+
         }
 
         this.state = false;
@@ -30,11 +31,13 @@ class Chatbox {
     }
 
     toggleState(chatbox) {
+        
         this.state = !this.state;
 
         // show or hides the box
         if(this.state) {
             chatbox.classList.add('chatbox--active')
+            // showLoader_main();
         } else {
             chatbox.classList.remove('chatbox--active')
         }
@@ -111,15 +114,12 @@ function fileSelected(input) {
     }
 }   
 function uploadFile() {
-    
     var fileInput = document.getElementById('fileInput');
     var file = fileInput.files[0];
     
     if (file) {
-        showLoader();        
-        document.getElementById('file_upload_button').disabled = true;
-        document.getElementById('popup-btn').disabled = true;
-        document.querySelector('.chatbox__send--footer').disabled = true;
+        showLoader_main();      
+        document.getElementById('chat_btn').disabled = true;
         var form = new FormData();
         form.append('file', file);
 
@@ -127,13 +127,10 @@ function uploadFile() {
         xhr.open('POST', '/upload', true);
 
         xhr.onload = function() {
-            hideLoader();
-            document.getElementById('file_upload_button').disabled = false;
-            document.getElementById('popup-btn').disabled = false;
-            document.querySelector('chatbox__send--footer').disabled = false;
+            hideLoader_main();
+            document.getElementById('chat_btn').disabled = false;
             if (xhr.status === 200) {
-                alert(xhr.responseText);
-                window.location.reload();
+                
             } else {
                 alert('Error uploading file!');
             }
@@ -148,8 +145,7 @@ function uploadFile() {
 document.addEventListener("DOMContentLoaded", function () {
     
     const popupBtn = document.getElementById('popup-btn');
-    const popup = document.getElementById('popup');
-    const closeBtn = document.getElementById('upload_url');
+    const closeBtn = document.getElementById('close-btn');
     
     popupBtn.addEventListener('click', openPopup);
     closeBtn.addEventListener('click', closePopup);
@@ -165,16 +161,27 @@ function closePopup() {
     popup.style.display = 'none';
   }
 
+
+function openUrlInput() {
+    var urlInput = document.getElementById('urlInput');
+    urlInput.click();
+}
+
+function urlSelected(input) {
+    var url = input.value.trim();
+    if (url) {
+        uploadURL(url);
+    }
+}   
+
+
 function uploadURL() {
     closePopup();
     var urlInput = document.getElementById('urlInput');
     var url = urlInput.value.trim();
-    
     if (url) {
-        document.getElementById('file_upload_button').disabled = true;
-        document.getElementById('popup-btn').disabled = true;
-        document.querySelector('chatbox__send--footer').disabled = true;
-        showLoader();
+        showLoader_main();
+        document.getElementById('chat_btn').disabled = true;
         var form = new FormData();
         form.append('url', url);
 
@@ -182,13 +189,10 @@ function uploadURL() {
         xhr.open('POST', '/upload_url', true);
 
         xhr.onload = function() {
-            hideLoader();
-            document.getElementById('file_upload_button').disabled = false;
-            document.getElementById('popup-btn').disabled = false;
-            document.querySelector('chatbox__send--footer').disabled = false;
+            hideLoader_main();
+            document.getElementById('chat_btn').disabled = false;
             if (xhr.status === 200) {
-                alert(xhr.responseText);
-                window.location.reload();
+
             } else {
                 alert('Error uploading URL!');
             }
@@ -200,8 +204,21 @@ function uploadURL() {
     }
     urlInput.value = '';
 }
+function showLoader_main() {
+    // Show the loading pop-up
+    var loadingPopup = document.getElementById('loadingPopup');
+    loadingPopup.style.display = 'flex';
+}
+
+function hideLoader_main() {
+    // Hide the loading pop-up
+    var loadingPopup = document.getElementById('loadingPopup');
+    loadingPopup.style.display = 'none';
+}
 
 
+
+// loader for chat
 function showLoader() {
     // Create a container for the loader
     var loaderContainer = document.createElement('div');

@@ -7,7 +7,8 @@ from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain_community.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Cassandra
-from langchain.embeddings.openai import OpenAIEmbeddings
+# from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from PyPDF2 import PdfReader
 from docx import Document
 from pptx import Presentation
@@ -16,11 +17,18 @@ from dotenv import load_dotenv
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import requests
+from astrapy.db import AstraDB
+import atexit
+import secrets
+import random
+import string
+
 
 app = Flask(__name__)
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-app.config["AstraVectorIndex"] = None
+app.config["SESSION_PERMANENT"] = False # Session is not permanent
+app.config["SESSION_TYPE"] = "filesystem" # Store session data in file system
+app.config["AstraVectorIndex"] = None # Store the vector index in session
+app.config["AstraVectorStore"] = None # Store the vector store in session
 Session(app)
 
 # Load environment variables from .env file
@@ -28,25 +36,35 @@ load_dotenv(override=True)
 
 ASTRA_DB_APPLICATION_TOKEN = os.getenv('ASTRA_DB_APPLICATION_TOKEN')
 ASTR_DB_ID = os.getenv('ASTR_DB_ID')
+# ASTRA_DB_API_ENDPOINT = os.getenv('ASTRA_DB_API_ENDPOINT')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-app.secret_key = 'app_secret_key'
+app.secret_key = secrets.token_hex() # Generate a random secret key
 
+
+
+####################################################
+# Function to generate random string for table_name
+
+def generate_random_string(length=10):
+    characters = string.ascii_lowercase + string.digits + '_'
+    random_string = ''.join(random.choice(characters) for _ in range(length - 2))
+    return random.choice(string.ascii_lowercase + string.digits) + random_string + random.choice(string.ascii_lowercase + string.digits)
+table_name = generate_random_string()
 
 ####################################################
 # AstraDB connection and vector store initialization
 def initialize_astra_vector_store():
     cassio.init(token=ASTRA_DB_APPLICATION_TOKEN, database_id=ASTR_DB_ID)
+    
     embedding = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-
     astra_vector_store = Cassandra(
         embedding=embedding,
-        table_name='pdfquery02',
+        table_name=table_name,
         session=None,
         keyspace=None
     )
+    print('----------------------table created as table_name:', table_name)
     return astra_vector_store
-####################################################
-
 ####################################################
 ####################################################
 # Function to preprocess url
@@ -209,11 +227,15 @@ message_history = []# message history
 # initial message
 message_text = [{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."}]
 message_history.extend(message_text)
-# Define Flask routes for chatbot
+# Initiate Flask routes for chatbot
 @app.route('/')
 def index():
+    current_app.config["AstraVectorStore"] = initialize_astra_vector_store() # Store the vector store in session
+    print('----------------------astraDB initialized')
+    
     return render_template('index.html', uploaded_files=session.get('uploaded_files', []))
 
+# Route to upload file
 @app.route('/upload', methods=['POST'])
 def upload():
     
@@ -226,8 +248,7 @@ def upload():
             # preprocess the file and store the texts in session
             session['texts'] = preprocessor_files(file)
             texts = session.get('texts')
-            astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
-            print('----------------------astraDB initialized')
+            astra_vector_store = current_app.config["AstraVectorStore"]
             astra_vector_store.add_texts(texts)
             print('----------------------texts added to astraDB')
             astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
@@ -235,6 +256,7 @@ def upload():
             return 'File uploaded and preprocessed successfully!'
     return 'No file selected!'
 
+# Route to upload URL
 @app.route('/upload_url', methods=['POST'])
 def upload_url():
     
@@ -251,8 +273,7 @@ def upload_url():
 
         session['texts'] = preprocess_url(url)
         texts = session.get('texts')
-        astra_vector_store = initialize_astra_vector_store() # Initialize once before processing
-        print('----------------------astraDB initialized')
+        astra_vector_store = current_app.config["AstraVectorStore"]
         astra_vector_store.add_texts(texts)
         print('----------------------texts added to astraDB')
         astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
@@ -260,41 +281,81 @@ def upload_url():
         return 'URL uploaded successfully!'
     return 'No URL selected!'
 
+
+# Chatbot route--main route for chatbot--handels both GET and POST requests
 @app.route('/chat', methods=['GET', 'POST'])
 def chatbot():
     
     if request.method == 'POST': # if there is file upload then preprocess it\
         user_message = request.form.get('message')
-        if current_app.config["AstraVectorIndex"] is not None:
+
+        # Check if the uploaded files are available in session
+        if (session.get('uploaded_files') is not None) and (current_app.config["AstraVectorIndex"] is not None):
             astra_vector_index = current_app.config["AstraVectorIndex"]
             print('----------------------astra_vector_index is not None')
+            
+            
             # Perform initial query on VectorDB
             vectorDB_answer = perform_query(user_message, astra_vector_index)
             print('----------------------vectorDB query performed')
-            message_history.append({"role": "user", "content": f"Answer this: {user_message}, you can use this additional information if required {vectorDB_answer}"})
+            vector_response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
+                          {"role":"user","content":"Answer 'Yes' if the context provided has some information in it else answer 'No'\n\n Context:\n" + vectorDB_answer}]              
+            )
+            vector_response  = vector_response.choices[0].message.content
+            print('----------------------vector_response:', vector_response)
+            if vector_response == 'Yes': # if the context has some information
+                print('----------------------vectorDB_answer:', vectorDB_answer)
+                message_history.append({"role":"assistant","content":vectorDB_answer})
+                return jsonify({"response": vectorDB_answer})
+                
+                
+                
+            elif vector_response == 'No':
+                historical_check_answer = openai.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                messages= [{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
+                              {"role":"user","content":f"Answer 'Yes' if the prompt contains any words related to the words or their synonyms in the list; otherwise, answer 'No'\n\n prompt:\n  {user_message}  \n\n list:\n ['summary', 'elaborate', 'detail', 'explain']"}]              
+                )
+                print('----------------------historical_check_response:', historical_check_answer.choices[0].message.content)
+                historical_check_answer = historical_check_answer.choices[0].message.content
+                if historical_check_answer == 'Yes':
+                    message_history.append({"role": "user", "content": user_message})
+                    # Rest of the code for chat processing
+                    # send message to openai
+                    response = openai.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages = message_history,
+                    temperature=0.7,
+                    max_tokens=800,
+                    top_p=0.95,
+                    frequency_penalty=0,
+                    presence_penalty=0,
+                    stop=None
+                    # stream=True
+                    )
+                    # append assistant message to message history
+                    message_history.append({"role":"assistant","content":response.choices[0].message.content})
+                    return jsonify({"response": response.choices[0].message.content})
+                elif historical_check_answer == 'No':
+                    message_history.append({'role': 'assistant', 'content': 'No related answer is available in the files or url uploaded!'})
+                    return jsonify({"response": "No related answer is available in the files or url uploaded!"})
 
         else:
-            print('----------------------astra_vector_index not found in session')
-            message_history.append({"role": "user", "content": user_message})
+            return jsonify({"response": "Please upload a file or URL to start the conversation!"})
 
-    # Rest of the code for chat processing
-
-    # send message to openai
-    response = openai.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages = message_history,
-    temperature=0.7,
-    max_tokens=800,
-    top_p=0.95,
-    frequency_penalty=0,
-    presence_penalty=0,
-    stop=None
-    # stream=True
+def delete_table():
+    print('----------------------inside delete_table')
+    db = AstraDB(
+        token=os.getenv('ASTRA_DB_APPLICATION_TOKEN'),
+        api_endpoint='https://537ef95d-dcce-42e2-8995-918e070355e6-centralindia.apps.astra.datastax.com',
     )
-    # append assistant message to message history
-    message_history.append({"role":"assistant","content":response.choices[0].message.content})
-    return jsonify({"response": response.choices[0].message.content})
-
+    print('----------------------table_name:', table_name)      
+    # Drop the table created for this session
+    db.delete_collection(collection_name=table_name)
+    print("----------------------APP EXITED----------------------")
+atexit.register(delete_table)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
