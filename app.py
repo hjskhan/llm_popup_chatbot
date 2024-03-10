@@ -291,7 +291,7 @@ def chatbot():
         user_message = request.form.get('message')
 
         # Check if the uploaded files are available in session
-        if (session.get('uploaded_files') is not None) and (session.get('url_links') is not None) and (current_app.config["AstraVectorIndex"] is not None):
+        if ((session.get('uploaded_files') is not None) or (session.get('url_links') is not None)) and (current_app.config["AstraVectorIndex"] is not None):
             astra_vector_index = current_app.config["AstraVectorIndex"]
             print('----------------------astra_vector_index is not None')
             
