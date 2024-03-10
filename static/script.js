@@ -249,7 +249,7 @@ function toggleChatboxSize() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    var socket = io.connect('https://pop-chatbot.azurewebsites.net/');
 
         // Perform actions when the page is loaded or refreshed
         window.onload = function() {
