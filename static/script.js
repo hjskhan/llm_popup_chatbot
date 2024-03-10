@@ -248,5 +248,23 @@ function toggleChatboxSize() {
     chatboxSupport.classList.toggle('expanded');
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // Perform actions when the page is loaded or refreshed
+        window.onload = function() {
+            console.log('Page loaded');
+        };
+        window.
+        // Perform actions when the page is closed or tab is closed
+        window.onbeforeunload = function() {
+            socket.emit('disconnect');
+        };
+
+        // Handle disconnect response from the server
+        socket.on('disconnect', function() {
+        console.log('Server acknowledged disconnect');
+        });
+});
 const chatbox = new Chatbox();
 chatbox.display();  
