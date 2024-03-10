@@ -349,7 +349,7 @@ def delete_table():
     print('----------------------inside delete_table')
     db = AstraDB(
         token=os.getenv('ASTRA_DB_APPLICATION_TOKEN'),
-        api_endpoint='https://537ef95d-dcce-42e2-8995-918e070355e6-centralindia.apps.astra.datastax.com',
+        api_endpoint=os.getenv('ASTRA_DB_API_ENDPOINT'),
     )
     print('----------------------table_name:', table_name)      
     # Drop the table created for this session
