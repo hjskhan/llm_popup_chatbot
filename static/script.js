@@ -37,7 +37,7 @@ class Chatbox {
         // show or hides the box
         if(this.state) {
             chatbox.classList.add('chatbox--active')
-            // showLoader_main();
+            showLoader_main();
         } else {
             chatbox.classList.remove('chatbox--active')
         }
@@ -130,7 +130,7 @@ function uploadFile() {
             hideLoader_main();
             document.getElementById('chat_btn').disabled = false;
             if (xhr.status === 200) {
-                
+                alert('File uploaded successfully!')
             } else {
                 alert('Error uploading file!');
             }
@@ -192,7 +192,7 @@ function uploadURL() {
             hideLoader_main();
             document.getElementById('chat_btn').disabled = false;
             if (xhr.status === 200) {
-
+                alert('URL uploaded successfully!')
             } else {
                 alert('Error uploading URL!');
             }

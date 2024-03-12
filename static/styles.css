@@ -426,6 +426,8 @@ body {
 /* styles for the loading pop-up */
 .loading-popup {
     display: none;
+    /* display: flex; */
+    /* flex-direction: column; */
     position: fixed;
     top: 0;
     left: 0;
@@ -436,6 +438,13 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 999;
+}
+.loading-text{
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 300;
+    margin: 15px;
+
 }
 
 .loader_main {

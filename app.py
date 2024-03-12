@@ -4,6 +4,7 @@ import os
 import openai
 from langchain.adapters import openai as lc_openai #for chatbot two way conversations
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
+from langchain_astradb import AstraDBVectorStore
 from langchain_community.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Cassandra
@@ -26,7 +27,6 @@ import string
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False # Session is not permanent
 app.config["SESSION_TYPE"] = "filesystem" # Store session data in file system
-app.config["AstraVectorIndex"] = None # Store the vector index in session
 app.config["AstraVectorStore"] = None # Store the vector store in session
 Session(app)
 
@@ -35,7 +35,7 @@ load_dotenv(override=True)
 
 ASTRA_DB_APPLICATION_TOKEN = os.getenv('ASTRA_DB_APPLICATION_TOKEN')
 ASTR_DB_ID = os.getenv('ASTR_DB_ID')
-# ASTRA_DB_API_ENDPOINT = os.getenv('ASTRA_DB_API_ENDPOINT')
+ASTRA_DB_API_ENDPOINT = os.getenv('ASTRA_DB_API_ENDPOINT')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 app.secret_key = secrets.token_hex() # Generate a random secret key
 
@@ -49,18 +49,20 @@ def generate_random_string(length=10):
     random_string = ''.join(random.choice(characters) for _ in range(length - 2))
     return random.choice(string.ascii_lowercase) + random_string + random.choice(string.ascii_lowercase)
 table_name = generate_random_string()
+# table_name = 'astra_vector_demo'
 ####################################################
 # AstraDB connection and vector store initialization
 def initialize_astra_vector_store():
-    cassio.init(token=ASTRA_DB_APPLICATION_TOKEN, database_id=ASTR_DB_ID)
+    # cassio.init(token=ASTRA_DB_APPLICATION_TOKEN, database_id=ASTR_DB_ID)
     
     embedding = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-    astra_vector_store = Cassandra(
-        embedding=embedding,
-        table_name=table_name,
-        session=None,
-        keyspace=None
-    )
+
+    astra_vector_store = AstraDBVectorStore(
+    embedding=embedding,
+    collection_name=table_name,
+    api_endpoint=ASTRA_DB_API_ENDPOINT,
+    token=ASTRA_DB_APPLICATION_TOKEN
+)
     print('----------------------table created as table_name:', table_name)
     return astra_vector_store
 ####################################################
@@ -214,10 +216,26 @@ def preprocess_word(uploaded_file):
 
 ####################################################
 # Function to perform query from AstraDB
-def perform_query(query_text, astra_vector_index):
-    llm = OpenAI(openai_api_key=OPENAI_API_KEY)
-    answer = astra_vector_index.query(query_text, llm=llm).strip()
-    return answer
+def perform_query(query_text, astra_vector_store):
+    vectorDB_answer = astra_vector_store.similarity_search_with_score(query_text, k=1)
+    res, score = vectorDB_answer[0]
+    return res.page_content, score
+
+
+# Function to perform query from chatcompletion
+def perform_query_chat(message_history):
+    response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages = message_history,
+                temperature=0.7,
+                max_tokens=800,
+                top_p=0.95,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop=None
+                # stream=True
+                )
+    return response
 ####################################################
 
 
@@ -248,9 +266,9 @@ def upload():
             texts = session.get('texts')
             astra_vector_store = current_app.config["AstraVectorStore"]
             astra_vector_store.add_texts(texts)
+            # astra_vector_store.add_documents(texts)
             print('----------------------texts added to astraDB')
-            astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
-            current_app.config["AstraVectorIndex"] = astra_vector_index
+            current_app.config["AstraVectorStore"] = astra_vector_store
             return 'File uploaded and preprocessed successfully!'
     return 'No file selected!'
 
@@ -274,8 +292,7 @@ def upload_url():
         astra_vector_store = current_app.config["AstraVectorStore"]
         astra_vector_store.add_texts(texts)
         print('----------------------texts added to astraDB')
-        astra_vector_index = VectorStoreIndexWrapper(vectorstore=astra_vector_store)
-        current_app.config["AstraVectorIndex"] = astra_vector_index  # Store the vector index in session
+        current_app.config["AstraVectorStore"] = astra_vector_store
         return 'URL uploaded successfully!'
     return 'No URL selected!'
 
@@ -288,56 +305,57 @@ def chatbot():
         user_message = request.form.get('message')
 
         # Check if the uploaded files are available in session
-        if ((session.get('uploaded_files') is not None) or (session.get('url_links') is not None)) and (current_app.config["AstraVectorIndex"] is not None):
-            astra_vector_index = current_app.config["AstraVectorIndex"]
+        if ((session.get('uploaded_files') is not None) or (session.get('url_links') is not None)) and (current_app.config["AstraVectorStore"] is not None):
+            astra_vector_store = current_app.config["AstraVectorStore"]
             print('----------------------astra_vector_index is not None')
             
             # Perform initial query on VectorDB
-            vectorDB_answer = perform_query(user_message, astra_vector_index)
+            vectorDB_answer, score = perform_query(user_message, astra_vector_store)
+            # vectorDB_answer = astra_vector_store.similarity_search_with_score(user_message, k=1)
             print('----------------------vectorDB query performed')
-            vector_response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
-                          {"role":"user","content":"Answer 'Yes' if the context provided has some information in it else answer 'No'\n\n Context:\n" + vectorDB_answer}]              
-            )
-            vector_response  = vector_response.choices[0].message.content
-            print('----------------------vector_response:', vector_response)
-            if vector_response == 'Yes': # if the context has some information
-                print('----------------------vectorDB_answer:', vectorDB_answer)
-                message_history.append({"role":"assistant","content":vectorDB_answer})
-                return jsonify({"response": vectorDB_answer})
+            # print('----------------------vectorDB_answer:', vectorDB_answer)
                 
+            if score >= 0.89:
+                prompt = f"""
+                        Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in \
+                        provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n \
+                        Context:\n {vectorDB_answer}\n \
+                        Question: \n{user_message}\n \
+                        """
+                message_history.append({"role": "user", "content": prompt})
+                response = perform_query_chat(message_history)
                 
-                
-            elif vector_response == 'No':
-                historical_check_answer = openai.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                messages= [{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
-                              {"role":"user","content":f"Answer 'Yes' if the prompt contains any words related to the words or their synonyms in the list; otherwise, answer 'No'\n\n prompt:\n  {user_message}  \n\n list:\n ['summary', 'elaborate', 'detail', 'explain']"}]              
-                )
-                print('----------------------historical_check_response:', historical_check_answer.choices[0].message.content)
-                historical_check_answer = historical_check_answer.choices[0].message.content
-                if historical_check_answer == 'Yes':
-                    message_history.append({"role": "user", "content": user_message})
-                    # Rest of the code for chat processing
-                    # send message to openai
-                    response = openai.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages = message_history,
-                    temperature=0.7,
-                    max_tokens=800,
-                    top_p=0.95,
-                    frequency_penalty=0,
-                    presence_penalty=0,
-                    stop=None
-                    # stream=True
-                    )
-                    # append assistant message to message history
-                    message_history.append({"role":"assistant","content":response.choices[0].message.content})
-                    return jsonify({"response": response.choices[0].message.content})
-                elif historical_check_answer == 'No':
-                    message_history.append({'role': 'assistant', 'content': 'No related answer is available in the files or url uploaded!'})
+                # append assistant message to message history
+                message_history.append({"role":"assistant","content":response.choices[0].message.content})
+                return jsonify({"response": response.choices[0].message.content})
+            
+            else:
+                latest_assistant_content = next(item['content'] for item in reversed(message_history) if item['role'] == 'assistant')
+                # print('----------------------latest_assistant:',latest_assistant_content)
+                contextualize_prompt = f"""Given a content and a user question, if the user question is in reference to the context in\
+                  the given content or if it asks for summarization, elaboration, detailed explanation, or related queries related about the content, formulate a\
+                    standalone question that can be understood without the given content. Otherwise, return 'NO'. Do NOT answer the question;\
+                      just reformulate it if needed.\n\n
+                                        user question:\n {user_message}\n \
+                                        content: {latest_assistant_content}
+                                        """         
+
+                prompt = [{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
+                 {"role": "user", "content": contextualize_prompt}]
+                # print('----------------------contextualize_prompt:', contextualize_prompt)
+                response = perform_query_chat(prompt)
+
+                if response.choices[0].message.content == 'NO':
+                    print('----------------------NO')
+                    message_history.append({"role":"user","content":user_message})
+                    message_history.append({"role":"assistant","content":"No related answer is available in the files or url uploaded!"})
                     return jsonify({"response": "No related answer is available in the files or url uploaded!"})
+                else:
+                    print('----------------------YES')
+                    message_history.append({"role":"user","content":response.choices[0].message.content})
+                    response = perform_query_chat(message_history)
+                    message_history.append({'role': 'assistant', 'content': response.choices[0].message.content})
+                    return jsonify({"response": response.choices[0].message.content})
 
         else:
             return jsonify({"response": "Please upload a file or URL to start the conversation!"})
