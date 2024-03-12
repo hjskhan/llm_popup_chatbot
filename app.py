@@ -18,11 +18,9 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import requests
 from astrapy.db import AstraDB
-import atexit
 import secrets
 import random
 import string
-from flask_socketio import SocketIO
 
 
 app = Flask(__name__)
@@ -31,7 +29,6 @@ app.config["SESSION_TYPE"] = "filesystem" # Store session data in file system
 app.config["AstraVectorIndex"] = None # Store the vector index in session
 app.config["AstraVectorStore"] = None # Store the vector store in session
 Session(app)
-socketio = SocketIO(app)
 
 # Load environment variables from .env file
 load_dotenv(override=True)
@@ -345,19 +342,6 @@ def chatbot():
         else:
             return jsonify({"response": "Please upload a file or URL to start the conversation!"})
 
-        
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('----------------------inside delete_table')
-    db = AstraDB(
-        token=os.getenv('ASTRA_DB_APPLICATION_TOKEN'),
-        api_endpoint=os.getenv('ASTRA_DB_API_ENDPOINT'),
-    )
-    print('----------------------table_name:', table_name)      
-    # Drop the table created for this session
-    db.delete_collection(collection_name=table_name)
-    print("----------------------APP EXITED----------------------")
-    print('Client disconnected')
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
