@@ -37,7 +37,7 @@ class Chatbox {
         // show or hides the box
         if(this.state) {
             chatbox.classList.add('chatbox--active')
-            showLoader_main();
+            // showLoader_main();
         } else {
             chatbox.classList.remove('chatbox--active')
         }
