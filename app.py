@@ -2,18 +2,13 @@ from flask import Flask, render_template, request, session, jsonify, current_app
 from flask_session import Session
 import os
 import openai
-from langchain.adapters import openai as lc_openai #for chatbot two way conversations
-from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain_astradb import AstraDBVectorStore
 from langchain_community.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import Cassandra
-# from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from PyPDF2 import PdfReader
 from docx import Document
 from pptx import Presentation
-import cassio
 from dotenv import load_dotenv
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
