@@ -310,7 +310,7 @@ def chatbot():
             print('----------------------vectorDB query performed')
             # print('----------------------vectorDB_answer:', vectorDB_answer)
                 
-            if score >= 0.89:
+            if score >= 0.89: # if the score is greater than 0.89, then return the answer from VectorDB
                 prompt = f"""
                         Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in \
                         provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n \
@@ -324,37 +324,56 @@ def chatbot():
                 message_history.append({"role":"assistant","content":response.choices[0].message.content})
                 return jsonify({"response": response.choices[0].message.content})
             
-            else:
-                latest_assistant_content = next(item['content'] for item in reversed(message_history) if item['role'] == 'assistant')
-                # print('----------------------latest_assistant:',latest_assistant_content)
-                contextualize_prompt = f"""Given a content and a user question, if the user question is in reference to the context in\
-                  the given content or if it asks for summarization, elaboration, detailed explanation, or related queries related about the content, formulate a\
-                    standalone question that can be understood without the given content. Otherwise, return 'NO'. Do NOT answer the question;\
-                      just reformulate it if needed.\n\n
-                                        user question:\n {user_message}\n \
-                                        content: {latest_assistant_content}
-                                        """         
+            else: # if the score is less than 0.89, then check if the user question is in reference to the context in the given content(chat history)
+                if  next(item['content'] for item in reversed(message_history) if item['role'] == 'assistant') is not None:
+                    # this occurs only when there is some content in the chat history (goes to the else if the chat history is empty)
+                    latest_assistant_content = next(item['content'] for item in reversed(message_history) if item['role'] == 'assistant')
+                    # print('----------------------latest_assistant:',latest_assistant_content)
+                    contextualize_prompt = f"""Given a content and a user question, if the user question is in reference to the context in\
+                    the given content or if it asks for summarization, elaboration, detailed explanation, or related queries related about the content, formulate a\
+                        standalone question that can be understood without the given content. Otherwise, return 'NO'. Do NOT answer the question;\
+                        just reformulate it if needed.\n\n
+                                            user question:\n {user_message}\n \
+                                            content: {latest_assistant_content}
+                                            """         
 
-                prompt = [{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
-                 {"role": "user", "content": contextualize_prompt}]
-                # print('----------------------contextualize_prompt:', contextualize_prompt)
-                response = perform_query_chat(prompt)
+                    prompt = [{"role":"system","content":"You are an AI assistant that helps people by answering the questions asked."},
+                    {"role": "user", "content": contextualize_prompt}]
+                    # print('----------------------contextualize_prompt:', contextualize_prompt)
+                    response = perform_query_chat(prompt)
 
-                if response.choices[0].message.content == 'NO':
-                    print('----------------------NO')
-                    message_history.append({"role":"user","content":user_message})
-                    message_history.append({"role":"assistant","content":"No related answer is available in the files or url uploaded!"})
-                    return jsonify({"response": "No related answer is available in the files or url uploaded!"})
-                else:
-                    print('----------------------YES')
-                    message_history.append({"role":"user","content":response.choices[0].message.content})
-                    response = perform_query_chat(message_history)
-                    message_history.append({'role': 'assistant', 'content': response.choices[0].message.content})
-                    return jsonify({"response": response.choices[0].message.content})
+                    if response.choices[0].message.content == 'NO': # if the user question is not in reference to the context in the given content
+                        print('----------------------NO')
+                        message_history.append({"role":"user","content":user_message})
+                        message_history.append({"role":"assistant","content":"No related answer is available in the files or url uploaded!"})
+                        return jsonify({"response": "No related answer is available in the files or url uploaded!"})
+                    else: # if the user question is in reference to the context in the given content
+                        print('----------------------YES')
+                        message_history.append({"role":"user","content":response.choices[0].message.content})
+                        response = perform_query_chat(message_history)
+                        message_history.append({'role': 'assistant', 'content': response.choices[0].message.content})
+                        return jsonify({"response": response.choices[0].message.content})
+                
+                else: # if the chat history is empty
+                    return jsonify({"response": "Please upload a file or URL to start the conversation!"})
 
         else:
             return jsonify({"response": "Please upload a file or URL to start the conversation!"})
 
+####################################################
+@app.route('/deleteCollection', methods=['GET'])
+def deleteCollection():
+    print('----------------------inside delete_table')
+    db = AstraDB(
+        token=os.getenv('ASTRA_DB_APPLICATION_TOKEN'),
+        api_endpoint=os.getenv('ASTRA_DB_API_ENDPOINT'),
+    )
+    # Drop the table created for this session
+    db.delete_collection(collection_name=table_name)
+    print('----------------------table deleted', table_name)
+    print("----------------------APP EXITED----------------------")
+
+####################################################
 
 if __name__ == '__main__':
     app.run(debug=True)

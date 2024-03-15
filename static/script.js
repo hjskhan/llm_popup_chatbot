@@ -37,9 +37,13 @@ class Chatbox {
         // show or hides the box
         if(this.state) {
             chatbox.classList.add('chatbox--active')
+            document.querySelector('.click-here-image').style.display = 'none';
             // showLoader_main();
-        } else {
+         } else {
             chatbox.classList.remove('chatbox--active')
+            setTimeout(() => {
+                document.querySelector('.click-here-image').style.display = 'flex';
+            }, 200);
         }
     }
 
@@ -130,9 +134,9 @@ function uploadFile() {
             hideLoader_main();
             document.getElementById('chat_btn').disabled = false;
             if (xhr.status === 200) {
-                alert('File uploaded successfully!')
+                alert('File processed successfully!')
             } else {
-                alert('Error uploading file!');
+                alert('Error processing file!\n\nThis might be due to text content being too long\n Please try again by refreshing the page or with a different file.');
             }
         };
 
@@ -192,9 +196,9 @@ function uploadURL() {
             hideLoader_main();
             document.getElementById('chat_btn').disabled = false;
             if (xhr.status === 200) {
-                alert('URL uploaded successfully!')
+                alert('URL processed successfully!')
             } else {
-                alert('Error uploading URL!');
+                alert('Error processing URL! \n This might be due to text content being too long or the URL not being accessible.\n Please try again by refreshing the page or with a different URL.');
             }
         };
 
@@ -248,5 +252,26 @@ function toggleChatboxSize() {
     chatboxSupport.classList.toggle('expanded');
 }
 
+// function to delete the collection
+window.addEventListener('beforeunload', callBackendFunction);
+
+function callBackendFunction() {
+    var xhr = new XMLHttpRequest();
+  
+    xhr.open('GET', '/deleteCollection', true);
+  
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        // Handle successful response from the backend
+        console.log("delete table executed successfully! Response:", xhr.responseText);
+      } else {
+        console.error("Error:", xhr.statusText);
+      }
+    };
+  
+    xhr.send();
+  }
+
+  
 const chatbox = new Chatbox();
 chatbox.display();  
